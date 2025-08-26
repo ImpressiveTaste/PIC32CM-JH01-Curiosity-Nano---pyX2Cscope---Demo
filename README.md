@@ -1,74 +1,53 @@
-# PIC32CM-JH01-Curiosity-Nano---pyX2Cscope---Demo
+# PIC32CM JH01 Curiosity Nano – pyX2Cscope Demo
 
-**Last updated:** July 27, 2025
+This repository contains small Python utilities and accompanying firmware that
+show how to communicate with a Microchip PIC32CM JH01 Curiosity Nano board via
+UART using the [pyX2Cscope](https://x2cscope.github.io/pyx2cscope/) library.
 
-This repository showcases several demos built around the LX34070A inductive sensor. A cheap dsPIC33CK64MC105 Curiosity Nano Board was used to read the signal from the inductive sensor. Python GUIs connect to the dsPIC through [pyX2Cscope](https://x2cscope.github.io/pyx2cscope/) when available, but all programs also have a demo mode that simulates data so they can run standalone.
+The MCU firmware (`main_temp.c`) samples an I²C temperature sensor and exposes
+two variables through the X2Cscope interface:
 
-![GUI Demo](GUIMotorGaugeDemo.png)
+* **`TemperatureValueX2C`** – current temperature in °C.
+* **`tempSampleRate`** – enumeration representing the sensor sampling period.
 
-![dsPIC33CK with Hardware Connection to LX34070A](realhardware.jpg)
+The Python scripts connect to the board, read these variables and present them
+in various GUIs.  When `pyx2cscope` is missing the programs fall back to a demo
+mode that generates synthetic data so the interfaces remain usable without
+hardware.
 
-## Included Demos
+## Included files
 
-- **`MotorGaugeDemo.py`** – PyQt6 application displaying the motor angle on multiple widgets. It can also plot sine and cosine waveforms and includes a calibration routine (Qt5 variant available).
-- **`MotorGaugeDemo_Qt5.py`** – PyQt5 version of the gauge demo for easier deployment on older systems.
-- **`KidMotorGaugeDemo.py`** – Simplified gauge designed for kids with a colourful dial and spinning star.
-- **`InductiveSensorDemo.py`** – PyQt6 version of the resolver signal monitor built with `pyqtgraph`.
-- **`InductiveSensorDemoTk.py`** – Tkinter variant of the resolver demo using `matplotlib` for plotting.
-- **`MotorLogger.py`** – A feature-rich logger that can start/stop the motor, log up to five variables with per-channel scaling and export the data.
-- **`main.c`** – Minimal firmware that samples the LX34070A resolver, normalises the data and publishes it via X2Cscope. It also drives quadrature A/B/Z outputs so the board can serve as a resolver-to-encoder converter. This is the `main.c` file running on the dsPIC33CK; extract the accompanying project zip and open it in MPLAB X IDE to rebuild. The compiled ELF is under the `dist` folder.
-
-## Features
-
-- Connects to a dsPIC33CK with ADCO and 1 connected to the LX34070A
-- Demo mode when `pyX2Cscope` is not installed
-- Multiple visualization options: dial gauge, slider, bar, LCD, compass and more
-- Resolver waveform plotting with triggers and calibration helper
+- `temperature_gui.py` – Tkinter application that displays the temperature and
+  sampling rate as text and visualises the temperature with a moving red bar.
+- `InductiveSensor.py` – Resolver signal monitor for the LX34070A inductive
+  sensor (runs with hardware or in demo mode).
+- `motorlogger.py` – Logging GUI able to capture motor-control variables.
+- `main_temp.c` – Firmware for the PIC32CM JH01 board providing the temperature
+  variables over X2Cscope.
 
 ## Requirements
 
 - Python 3.11+
-- [pyX2Cscope](https://pypi.org/project/pyx2cscope/)
-- Optional packages: `pyqtgraph`, `PyQt5` or `PyQt6`, `matplotlib`, `pandas` and `scipy`
-- A Microchip board with the LX34070A sensor (for hardware mode)
-- A dsPIC33CK64MC105 Curiosity nano board
+- `pyx2cscope` for hardware communication (`pip install pyx2cscope`)
+- `pyserial` (installed with `pyx2cscope`)
+- Optional dependencies for some demos: `matplotlib`, `pandas`, `scipy`
 
-## Setup
+## Running the temperature demo
 
-1. Create and activate a virtual environment:
+1. Build and flash `main_temp.c` to the PIC32CM JH01 Curiosity Nano.
+2. Connect the board via USB and note the serial port name.
+3. Start the GUI:
+
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # on Windows use venv\Scripts\activate
-   ```
-2. Install the required package:
-   ```bash
-   pip install pyx2cscope
-   ```
-3. (Optional) Install plotting and GUI dependencies:
-   ```bash
-   pip install PyQt5 pyqtgraph matplotlib pandas scipy
-   # or use PyQt6 if preferred
-   ```
-4. Run any demo, for example the gauge:
-   ```bash
-   python MotorGaugeDemo.py       # PyQt6 version
-   python MotorGaugeDemo_Qt5.py   # PyQt5 version
+   python temperature_gui.py
    ```
 
-## Usage Overview
+4. Select the compiled ELF file and serial port then click **Connect**.
+5. The GUI displays `TemperatureValueX2C` and `tempSampleRate` along with a
+   thermometer-style red bar that moves with the temperature.
 
-1. Select the ELF file built for your target and the COM port.
-2. Click **Connect** to establish communication or run in Demo mode if no hardware is found.
-3. For the gauge demos, use **Change View** to cycle through the different widgets.
-4. In `MotorLogger.py`, set the desired speed, scaling factor and sample interval then press **START**. Use **STOP** to end the capture early, plot the results or save them to file.
-5. `InductiveSensorDemo.py` and `InductiveSensorDemoTk.py` display sine and cosine signals along with the calculated angle. Both offer basic trigger options.
-6. `main.c` shows how the MCU collects ADC samples, normalizes them and exposes variables to X2Cscope. It also demonstrates generating A/B/Z pulses, turning the resolver into an incremental encoder.
-## How the Pieces Fit Together
+If `pyx2cscope` is not installed the GUI shows simulated values.
 
-The firmware periodically samples the resolver signals and computes the position using `atan2f`. These variables are exposed through X2Cscope so the Python GUIs can read them. The GUIs rely on a small wrapper class that hides the difference between real hardware and demo mode. Each demo updates its widgets every few milliseconds using `QTimer` or Tkinter's `after` callbacks. The logger additionally configures scope channels to capture all variables at a fixed rate and writes the scaled values to memory before optionally saving them.
+## License
 
-## References
-
-- [pyX2Cscope on GitHub](https://github.com/X2Cscope/pyx2cscope)
-- [X2Cscope documentation](https://x2cscope.github.io/)
-
+This code is provided for demonstration purposes without warranty.
