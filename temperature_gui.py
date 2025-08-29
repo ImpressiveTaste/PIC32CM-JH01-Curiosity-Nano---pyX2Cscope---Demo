@@ -205,10 +205,11 @@ class TemperatureGUI:
         self._after_id = self.root.after(self.DT_MS, self._update)
 
     def _update(self) -> None:
-        temp, rate = self._scope.read()
-        self.temp_str.set(f"Temperature: {temp:.0f} °C")
+        temp_c, rate = self._scope.read()
+        temp_f = temp_c * 9.0 / 5.0 + 32.0
+        self.temp_str.set(f"Temperature: {temp_f:.0f} °F")
         self.rate_str.set(f"Sample rate: {RATE_LABELS.get(rate, rate)}")
-        self._draw_thermometer(temp)
+        self._draw_thermometer(temp_c)
         if self.connected:
             self._schedule_update()
 
